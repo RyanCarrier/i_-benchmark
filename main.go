@@ -8,13 +8,16 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strconv"
+	"strings"
 )
 
 var total = 0
 var count = 0
-var inFile string     // stdin/file
-var readMethod string // bufio/ioutil/readfile
-var readStyle string  // line/all
+var inFile string      // stdin/file
+var readMethod string  // bufio/ioutil/readfile
+var readStyle string   // scanlines/line/all
+var parseMethod string //scan/fmtscan/splitstrconv
 var argv []string
 
 func init() {
@@ -55,7 +58,7 @@ func fromFile(f *os.File) {
 	}
 }
 
-//ReadFile does the same as
+//ReadFile does the same as ioutil.ReadFile without re-opening the file.
 func fromReadFile(f *os.File) {
 	var n int64
 	if fi, err := f.Stat(); err == nil {
@@ -64,12 +67,12 @@ func fromReadFile(f *os.File) {
 			n = size
 		}
 	}
-	ioutilReadFile(f, n)
+	ioutilReadAll(f, n)
 }
 
 func fromIoutil(f *os.File) {
-	ioutil.ReadAll(f) //reallocate buffer
-
+	r, _ := ioutil.ReadAll(f) //reallocate buffer
+	convertAll(r)
 }
 
 func fromBufio(f *os.File) {
@@ -78,10 +81,17 @@ func fromBufio(f *os.File) {
 	switch readStyle {
 	case "line":
 		p, _ = reader.ReadBytes('\n') //readstring calls readbytes
+		convertLine(p)
+	case "scanlines":
+		scanner := bufio.NewScanner(f)
+		for scanner.Scan() {
+			convertLine(scanner.Bytes())
+		}
 	case "all":
 		s, _ := f.Stat()
 		p = make([]byte, s.Size()+bytes.MinRead)
 		reader.Read(p)
+		convertAll(p)
 	default:
 		os.Exit(4) //SOMETHING WRONG
 	}
@@ -90,8 +100,27 @@ func fromBufio(f *os.File) {
 func usage() {
 	fmt.Println("main stdin/infile bufio/ioutil all/line ")
 }
-func convertLine(s []byte) {
 
+func convertAll(s []byte) {
+	scanner := bufio.NewScanner(bytes.NewBuffer(s))
+	for scanner.Scan() {
+		convertLine(scanner.Bytes())
+	}
+}
+
+func convertLine(s []byte) {
+	switch parseMethod {
+	case "fmtscan":
+	case "scan":
+	case "splitstrconv":
+		fields := strings.Fields(string(s))
+		for _, f := range fields {
+			i, _ := strconv.Atoi(f)
+			eval(i)
+		}
+	default:
+		os.Exit(5) //FAILL
+	}
 }
 
 //FROM READALL IOUTIL
@@ -99,7 +128,7 @@ func convertLine(s []byte) {
 // from the internal buffer allocated with a specified capacity.
 //rcarrier: We can't use the usual ioutil.ReadFile as we can't pass in stdin
 // that way. Also we don't want to have to re-open the input file.
-func ioutilReadFile(r io.Reader, capacity int64) (b []byte, err error) {
+func ioutilReadAll(r io.Reader, capacity int64) (b []byte, err error) {
 	buf := bytes.NewBuffer(make([]byte, 0, capacity))
 	// If the buffer overflows, we will get bytes.ErrTooLarge.
 	// Return that as an error. Any other panic remains.
