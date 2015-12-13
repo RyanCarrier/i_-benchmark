@@ -16,7 +16,7 @@ var total = 0
 var count = 0
 var inFile string      // stdin/file
 var readMethod string  // bufio/ioutil/readfile
-var readStyle string   // scanlines/line/all
+var readStyle string   // scan/scanlines/line/all
 var parseMethod string //scan/fmtscan/splitstrconv
 var argv []string
 
@@ -77,17 +77,25 @@ func fromIoutil(f *os.File) {
 
 func fromBufio(f *os.File) {
 	var p []byte
-	reader := bufio.NewReader(f)
+
 	switch readStyle {
 	case "line":
+		reader := bufio.NewReader(f)
 		p, _ = reader.ReadBytes('\n') //readstring calls readbytes
 		convertLine(p)
+	case "scan":
+		var i int
+		reader := bufio.NewReader(f)
+		for _, err := fmt.Scan(reader, &i); err == nil; _, err = fmt.Scan(reader, &i) {
+			eval(i)
+		}
 	case "scanlines":
 		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
 			convertLine(scanner.Bytes())
 		}
 	case "all":
+		reader := bufio.NewReader(f)
 		s, _ := f.Stat()
 		p = make([]byte, s.Size()+bytes.MinRead)
 		reader.Read(p)
@@ -112,6 +120,7 @@ func convertLine(s []byte) {
 	switch parseMethod {
 	case "fmtscan":
 	case "scan":
+
 	case "splitstrconv":
 		fields := strings.Fields(string(s))
 		for _, f := range fields {
