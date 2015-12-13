@@ -64,7 +64,7 @@ func fromReadFile(f *os.File) {
 			n = size
 		}
 	}
-	ioutilReadAll(f, n)
+	ioutilReadFile(f, n)
 }
 
 func fromIoutil(f *os.File) {
@@ -97,7 +97,9 @@ func convertLine(s []byte) {
 //FROM READALL IOUTIL
 // readAll reads from r until an error or EOF and returns the data it read
 // from the internal buffer allocated with a specified capacity.
-func ioutilReadAll(r io.Reader, capacity int64) (b []byte, err error) {
+//rcarrier: We can't use the usual ioutil.ReadFile as we can't pass in stdin
+// that way. Also we don't want to have to re-open the input file.
+func ioutilReadFile(r io.Reader, capacity int64) (b []byte, err error) {
 	buf := bytes.NewBuffer(make([]byte, 0, capacity))
 	// If the buffer overflows, we will get bytes.ErrTooLarge.
 	// Return that as an error. Any other panic remains.
