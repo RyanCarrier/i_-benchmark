@@ -67,7 +67,8 @@ func fromReadFile(f *os.File) {
 			n = size
 		}
 	}
-	ioutilReadAll(f, n)
+	b, _ := ioutilReadAll(f, n)
+	convertAll(b)
 }
 
 func fromIoutil(f *os.File) {
@@ -110,17 +111,28 @@ func usage() {
 }
 
 func convertAll(s []byte) {
-	scanner := bufio.NewScanner(bytes.NewBuffer(s))
-	for scanner.Scan() {
-		convertLine(scanner.Bytes())
+	var i int
+	reader := bytes.NewReader(s)
+	for _, err := fmt.Scan(reader, &i); err == nil; _, err = fmt.Scan(reader, &i) {
+		eval(i)
 	}
 }
 
 func convertLine(s []byte) {
+	var i int
 	switch parseMethod {
 	case "fmtscan":
+		reader := bytes.NewReader(s)
+		for _, err := fmt.Scan(reader, &i); err == nil; _, err = fmt.Scan(reader, &i) {
+			eval(i)
+		}
 	case "scan":
-
+		scanner := bufio.NewScanner(bytes.NewReader(s))
+		scanner.Split(bufio.ScanWords)
+		for scanner.Scan() {
+			i, _ := strconv.Atoi(scanner.Text()) // string(scanner.Bytes())
+			eval(i)
+		}
 	case "splitstrconv":
 		fields := strings.Fields(string(s))
 		for _, f := range fields {
