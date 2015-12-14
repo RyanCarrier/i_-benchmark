@@ -22,16 +22,18 @@ var argv []string
 
 func init() {
 	flag.Parse()
-	if len(flag.Args()) != 3 {
-		os.Exit(1)
-	}
+	//if len(flag.Args()) != 3 {
+	//	os.Exit(1)
+	//}
 	argv = flag.Args()
 }
 
 func init() {
-	inFile = argv[0]
-	readMethod = argv[1]
-	readStyle = argv[2]
+	if len(argv) == 3 {
+		inFile = argv[0]
+		readMethod = argv[1]
+		readStyle = argv[2]
+	}
 }
 
 func main() {
@@ -43,6 +45,7 @@ func main() {
 		defer f.Close()
 	}
 	fromFile(f)
+	fmt.Printf("%d %d", count, total)
 }
 
 func fromFile(f *os.File) {
@@ -112,9 +115,27 @@ func usage() {
 
 func convertAll(s []byte) {
 	var i int
-	reader := bytes.NewReader(s)
-	for _, err := fmt.Scan(reader, &i); err == nil; _, err = fmt.Scan(reader, &i) {
-		eval(i)
+	switch parseMethod {
+	case "fmtscan":
+		reader := bytes.NewReader(s)
+		for _, err := fmt.Scan(reader, &i); err == nil; _, err = fmt.Scan(reader, &i) {
+			eval(i)
+		}
+	case "scan":
+		scanner := bufio.NewScanner(bytes.NewReader(s))
+		scanner.Split(bufio.ScanWords)
+		for scanner.Scan() {
+			i, _ := strconv.Atoi(scanner.Text()) // string(scanner.Bytes())
+			eval(i)
+		}
+	case "splitstrconv":
+		fields := strings.Fields(string(s))
+		for _, f := range fields {
+			i, _ := strconv.Atoi(f)
+			eval(i)
+		}
+	default:
+		os.Exit(5) //FAILL
 	}
 }
 
