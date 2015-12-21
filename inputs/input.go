@@ -34,9 +34,10 @@ func NewCfg() *Cfg {
 //Exec is the main function of this package,
 // runs through the specified input file with parameters set in Cfg.
 func (c *Cfg) Exec() error {
-	if c.inFile == "stdin" {
+	switch c.inFile {
+	case "", "stdin":
 		c.f = os.Stdin
-	} else {
+	default:
 		c.f, _ = os.Open(c.inFile)
 		defer c.f.Close()
 	}

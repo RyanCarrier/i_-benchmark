@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestMainConvertAll(t *testing.T) {
+func TestInputConvertAll(t *testing.T) {
 	cases := []struct {
 		in    string
 		count int
@@ -29,16 +29,15 @@ func TestMainConvertAll(t *testing.T) {
 	methods := []string{"fmtscan", "scan", "splitstrconv"}
 	for iteration, c := range cases {
 		for _, method := range methods {
+			cfg := NewCfg()
 			parseMethod = method
-			total := 0
-			count := 0
 			convertLine([]byte(c.in))
 			switch {
 			case total != c.total:
-				t.Errorf("CASE %d\nTYPE %s\nTOTAL MISSMATCH\n\tGOT:\n\t\t%d\nWANT:\n\t\t%d",
+				t.Errorf("CASE %d\nTYPE %s\nTOTAL MISSMATCH\nGOT:\n\t\t%d\nWANT:\n\t\t%d",
 					iteration, parseMethod, total, c.total)
 			case count != c.count:
-				t.Errorf("CASE %d\nTYPE %s\nCOUNT MISSMATCH\n\tGOT:\n\t\t%d\nWANT:\n\t\t%d",
+				t.Errorf("CASE %d\nTYPE %s\nCOUNT MISSMATCH\nGOT:\n\t\t%d\nWANT:\n\t\t%d",
 					iteration, parseMethod, count, c.count)
 			}
 		}
