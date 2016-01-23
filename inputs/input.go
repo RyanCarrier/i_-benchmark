@@ -123,9 +123,11 @@ func (c *Cfg) fromBufio() error {
 }
 
 func usage() {
-	fmt.Println("main stdin/infile bufio/ioutil all/line ")
+	fmt.Println("Usage:")
+	fmt.Println("\tmain InputSource ParseMethod ParseByLine")
+	fmt.Println("\tmain stdin/infile bufio/ioutil all/line ")
+	os.Exit(29)
 }
-
 func (c *Cfg) convertAll(s []byte) error {
 	var i int
 	switch c.parseMethod {
