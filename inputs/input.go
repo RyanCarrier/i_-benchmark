@@ -14,51 +14,90 @@ import (
 
 //Cfg tells the package what configurations are being used.
 type Cfg struct {
-	total       int
-	count       int
-	inFile      string // stdin/file
-	readMethod  string // bufio/ioutil/readfile
-	readStyle   string // scan/scanlines/line/all
-	parseMethod string // scan/fmtscan/splitstrconv
-	f           *os.File
+	//Total keeps track of the total amount when the numbers are summed.
+	Total int
+	//Count keeps track of the amount of numbers processed.
+	Count int
+	//SourceFile is the input file, a file or stdin
+	SourceFile string // stdin/file
+	//ReadMethod determines which method is used to retrieve the data from file
+	ReadMethod string // bufio/ioutil/readfile
+	//BufioReadStyle is what type of reading should be used when bufio read is selected
+	BufioReadStyle string // scanint/scanlines/line/all
+	//ParseMethod decides which way the integers are passed from byte slices
+	ParseMethod string // scan/fmtscan/splitstrconv
+	//f is the pointer to the file to read from, file or stdin
+	f *os.File
+}
+
+func usage() {
+	fmt.Println("Usage:")
+	printt("main SourceFile ReadMethod BufioReadStyle ParseMethod")
+	fmt.Println(`In the case of "ReadMethod : bufio", "BufioReadStyle : scanint", ParseMethod is not needed.`)
+	os.Exit(29)
+}
+func usageSourceFile() {
+	fmt.Println("SourceFile;")
+	printt("stdin")
+	printt("file\t(any input file)")
+}
+
+func usageReadMethod() {
+	fmt.Println("ReadMethod;")
+	printt("bufio\tMust specify a BufioReadStyle")
+	printt("ioutil\tioutil is readfile with extra file open")
+	printt("readfile\tuses ioutils internal readfile")
+}
+
+func usageBufioReadStyle() {
+	fmt.Println("BufioReadStyle;")
+	printt("scanint\tscans by each int found, ParseMethod not used")
+	printt("scanlines\t scans by each line, then uses ParseMethod to evaluate line")
+}
+func printt(s string) {
+	fmt.Println("\t" + s)
 }
 
 //NewCfg gets a new config struct.
 func NewCfg() *Cfg {
 	return &Cfg{
-		total: 0,
-		count: 0,
+		Total: 0,
+		Count: 0,
 	}
 }
 
 //Exec is the main function of this package,
 // runs through the specified input file with parameters set in Cfg.
 func (c *Cfg) Exec() error {
-	switch c.inFile {
+	switch c.SourceFile {
 	case "", "stdin":
 		c.f = os.Stdin
 	default:
-		c.f, _ = os.Open(c.inFile)
+		c.f, _ = os.Open(c.SourceFile)
 		defer c.f.Close()
 	}
-	return c.fromFile()
+	err := c.ReadFromFile()
+	//defer will run before returned? TODO: Check this
+	return err
 }
 
-func (c *Cfg) fromFile() error {
-	switch c.readMethod {
+//ReadFromFile forwards the data reading job off to the correct function.
+//Alos note stdin is considered a file in this case
+func (c *Cfg) ReadFromFile() error {
+	switch c.ReadMethod {
 	case "bufio":
 		return c.fromBufio()
 	case "ioutil":
 		return c.fromIoutil()
 	case "readFile":
-		return c.fromReadFile()
+		return c.ReadFromIoutilReadAll()
 	default:
-		return errors.New("readMethod set incorrectly; " + c.readMethod)
+		return errors.New("ReadMethod set incorrectly; " + c.ReadMethod)
 	}
 }
 
-//ReadFile does the same as ioutil.ReadFile without re-opening the file.
-func (c *Cfg) fromReadFile() error {
+//ReadFromIoutilReadAll does the same as ioutil.ReadFile without re-opening the file.
+func (c *Cfg) ReadFromIoutilReadAll() error {
 	var n int64
 	if fi, err := c.f.Stat(); err == nil {
 		// Don't preallocate a huge buffer, just in case.
@@ -70,29 +109,35 @@ func (c *Cfg) fromReadFile() error {
 	if err != nil {
 		return err
 	}
-	return c.convertAll(b)
+	return c.EvaluateAll(b)
 }
 
 func (c *Cfg) fromIoutil() error {
+	//MAYBE CLOSE THEN REOPEN
 	r, err := ioutil.ReadAll(c.f) //reallocate buffer
 	if err != nil {
 		return err
 	}
-	return c.convertAll(r)
+	return c.EvaluateAll(r)
 }
 
 func (c *Cfg) fromBufio() error {
 	var p []byte
 	var err error
-	switch c.readStyle {
+	switch c.BufioReadStyle {
 	case "line":
 		reader := bufio.NewReader(c.f)
-		p, err = reader.ReadBytes('\n') //readstring calls readbytes
+		//readstring calls readbytes
+		for p, err = reader.ReadBytes('\n'); err == nil; p, err = reader.ReadBytes('\n') {
+			if err = c.EvaluateLine(p); err != nil {
+				return err
+			}
+		}
 		if err != nil {
 			return err
 		}
-		return c.convertLine(p)
-	case "scan":
+		return c.EvaluateLine(p)
+	case "scanint":
 		var i int
 		reader := bufio.NewReader(c.f)
 		for _, err := fmt.Scan(reader, &i); err == nil; _, err = fmt.Scan(reader, &i) {
@@ -102,10 +147,8 @@ func (c *Cfg) fromBufio() error {
 	case "scanlines":
 		scanner := bufio.NewScanner(c.f)
 		for scanner.Scan() {
-			err = c.convertLine(scanner.Bytes())
-			if err != nil {
-				return err
-			}
+			err = c.EvaluateLine(scanner.Bytes())
+			return err
 		}
 	case "all":
 		reader := bufio.NewReader(c.f)
@@ -115,22 +158,17 @@ func (c *Cfg) fromBufio() error {
 		}
 		p = make([]byte, s.Size()+bytes.MinRead)
 		reader.Read(p)
-		return c.convertAll(p)
+		return c.EvaluateAll(p)
 	default:
-		return errors.New("readStyle incorrectly set; " + c.readStyle)
+		return errors.New("BufioReadStyle incorrectly set; " + c.BufioReadStyle)
 	}
 	return nil
 }
 
-func usage() {
-	fmt.Println("Usage:")
-	fmt.Println("\tmain InputSource ParseMethod ParseByLine")
-	fmt.Println("\tmain stdin/infile bufio/ioutil all/line ")
-	os.Exit(29)
-}
-func (c *Cfg) convertAll(s []byte) error {
+//EvaluateAll evaluates everything passed in, multiple lines.
+func (c *Cfg) EvaluateAll(s []byte) error {
 	var i int
-	switch c.parseMethod {
+	switch c.ParseMethod {
 	case "fmtscan":
 		reader := bytes.NewReader(s)
 		for _, err := fmt.Scan(reader, &i); err == nil; _, err = fmt.Scan(reader, &i) {
@@ -159,14 +197,16 @@ func (c *Cfg) convertAll(s []byte) error {
 			c.eval(i)
 		}
 	default:
-		return errors.New("parseMethod not set correctly; " + c.parseMethod)
+		return errors.New("ParseMethod not set correctly; " + c.ParseMethod)
 	}
 	return nil
 }
 
-func (c *Cfg) convertLine(s []byte) error {
+//EvaluateLine converts the line from a byte slice to integers, then adding
+// them to Count and sum
+func (c *Cfg) EvaluateLine(s []byte) error {
 	var i int
-	switch c.parseMethod {
+	switch c.ParseMethod {
 	case "fmtscan":
 		reader := bytes.NewReader(s)
 		for _, err := fmt.Scan(reader, &i); err == nil; _, err = fmt.Scan(reader, &i) {
@@ -195,7 +235,7 @@ func (c *Cfg) convertLine(s []byte) error {
 			c.eval(i)
 		}
 	default:
-		return errors.New("parseMethod not set correctly; " + c.parseMethod)
+		return errors.New("ParseMethod not set correctly; " + c.ParseMethod)
 	}
 	return nil
 }
@@ -226,7 +266,7 @@ func ioutilReadAll(r io.Reader, capacity int64) (b []byte, err error) {
 
 func (c *Cfg) eval(i ...int) {
 	for _, val := range i {
-		c.total += val
+		c.Total += val
 	}
-	c.count += len(i)
+	c.Count += len(i)
 }
