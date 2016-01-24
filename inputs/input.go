@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -30,37 +29,31 @@ type Cfg struct {
 	f *os.File
 }
 
-func usage() {
-	fmt.Println("Usage:")
-	printt("main SourceFile ReadMethod BufioReadStyle ParseMethod")
-	fmt.Println(`In the case of "ReadMethod : bufio", "BufioReadStyle : scanint", ParseMethod is not needed.`)
-	os.Exit(29)
-}
-func usageSourceFile() {
-	fmt.Println("SourceFile;")
-	printt("stdin")
-	printt("file\t(any input file)")
-}
-
-func usageReadMethod() {
-	fmt.Println("ReadMethod;")
-	printt("bufio\tMust specify a BufioReadStyle")
-	printt("ioutil\tioutil is readfile with extra file open")
-	printt("readfile\tuses ioutils internal readfile")
-}
-
-func usageBufioReadStyle() {
-	fmt.Println("BufioReadStyle;")
-	printt("scanint\tscans by each int found, ParseMethod not used")
-	printt("scanlines\t scans by each line, then uses ParseMethod to evaluate line")
-}
-func printt(s string) {
-	fmt.Println("\t" + s)
+//SetupAndRun sets the cfg struct correctly, printing usage if errors.
+func (c *Cfg) SetupAndRun(argv []string) error {
+	if len(argv) < 3 || len(argv) > 4 {
+		return errors.New("Too little or too many arguments.")
+	}
+	c.SourceFile = strings.ToLower(argv[0])
+	c.ReadMethod = strings.ToLower(argv[1])
+	if len(argv) == 4 {
+		if c.ReadMethod != "bufio" {
+			return errors.New("To set BufioReadStyle, ReadMethod must be bufio.")
+		}
+		c.BufioReadStyle = strings.ToLower(argv[2])
+		c.ParseMethod = strings.ToLower(argv[3])
+	} else {
+		c.ParseMethod = strings.ToLower(argv[2])
+	}
+	if err := c.Exec(); err != nil {
+		return err
+	}
+	return nil
 }
 
 //NewCfg gets a new config struct.
-func NewCfg() *Cfg {
-	return &Cfg{
+func NewCfg() Cfg {
+	return Cfg{
 		Total: 0,
 		Count: 0,
 	}
@@ -86,9 +79,9 @@ func (c *Cfg) Exec() error {
 func (c *Cfg) ReadFromFile() error {
 	switch c.ReadMethod {
 	case "bufio":
-		return c.fromBufio()
+		return c.FromBufio()
 	case "ioutil":
-		return c.fromIoutil()
+		return c.FromIoutil()
 	case "readFile":
 		return c.ReadFromIoutilReadAll()
 	default:
@@ -112,7 +105,8 @@ func (c *Cfg) ReadFromIoutilReadAll() error {
 	return c.EvaluateAll(b)
 }
 
-func (c *Cfg) fromIoutil() error {
+//FromIoutil reads a file using ioutil(ReadAll)
+func (c *Cfg) FromIoutil() error {
 	//MAYBE CLOSE THEN REOPEN
 	r, err := ioutil.ReadAll(c.f) //reallocate buffer
 	if err != nil {
@@ -121,7 +115,9 @@ func (c *Cfg) fromIoutil() error {
 	return c.EvaluateAll(r)
 }
 
-func (c *Cfg) fromBufio() error {
+//FromBufio evaluates which bufio method to use when reading the file, then
+//does it.
+func (c *Cfg) FromBufio() error {
 	var p []byte
 	var err error
 	switch c.BufioReadStyle {
@@ -165,81 +161,6 @@ func (c *Cfg) fromBufio() error {
 	return nil
 }
 
-//EvaluateAll evaluates everything passed in, multiple lines.
-func (c *Cfg) EvaluateAll(s []byte) error {
-	var i int
-	switch c.ParseMethod {
-	case "fmtscan":
-		reader := bytes.NewReader(s)
-		for _, err := fmt.Scan(reader, &i); err == nil; _, err = fmt.Scan(reader, &i) {
-			if err != nil {
-				return err
-			}
-			c.eval(i)
-		}
-	case "scan":
-		scanner := bufio.NewScanner(bytes.NewReader(s))
-		scanner.Split(bufio.ScanWords)
-		for scanner.Scan() {
-			i, err := strconv.Atoi(scanner.Text()) // string(scanner.Bytes())
-			if err != nil {
-				return err
-			}
-			c.eval(i)
-		}
-	case "splitstrconv":
-		fields := strings.Fields(string(s))
-		for _, f := range fields {
-			i, err := strconv.Atoi(f)
-			if err != nil {
-				return err
-			}
-			c.eval(i)
-		}
-	default:
-		return errors.New("ParseMethod not set correctly; " + c.ParseMethod)
-	}
-	return nil
-}
-
-//EvaluateLine converts the line from a byte slice to integers, then adding
-// them to Count and sum
-func (c *Cfg) EvaluateLine(s []byte) error {
-	var i int
-	switch c.ParseMethod {
-	case "fmtscan":
-		reader := bytes.NewReader(s)
-		for _, err := fmt.Scan(reader, &i); err == nil; _, err = fmt.Scan(reader, &i) {
-			if err != nil {
-				return err
-			}
-			c.eval(i)
-		}
-	case "scan":
-		scanner := bufio.NewScanner(bytes.NewReader(s))
-		scanner.Split(bufio.ScanWords)
-		for scanner.Scan() {
-			i, err := strconv.Atoi(scanner.Text()) // string(scanner.Bytes())
-			if err != nil {
-				return err
-			}
-			c.eval(i)
-		}
-	case "splitstrconv":
-		fields := strings.Fields(string(s))
-		for _, f := range fields {
-			i, err := strconv.Atoi(f)
-			if err != nil {
-				return err
-			}
-			c.eval(i)
-		}
-	default:
-		return errors.New("ParseMethod not set correctly; " + c.ParseMethod)
-	}
-	return nil
-}
-
 //FROM READALL IOUTIL
 // readAll reads from r until an error or EOF and returns the data it read
 // from the internal buffer allocated with a specified capacity.
@@ -262,11 +183,4 @@ func ioutilReadAll(r io.Reader, capacity int64) (b []byte, err error) {
 	}()
 	_, err = buf.ReadFrom(r)
 	return buf.Bytes(), err
-}
-
-func (c *Cfg) eval(i ...int) {
-	for _, val := range i {
-		c.Total += val
-	}
-	c.Count += len(i)
 }
