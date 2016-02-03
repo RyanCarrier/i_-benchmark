@@ -53,15 +53,15 @@ func (c *Cfg) EvaluateLine(s []byte) error {
 	switch c.ParseMethod {
 	case "fmtscan":
 		reader := bytes.NewReader(s)
-		n, err := fmt.Scan(reader, &i)
-		fmt.Println(n)
+		_, err := fmt.Fscan(reader, &i)
+		//	fmt.Println(n)
 		for err == nil {
 			if err != nil {
 				return err
 			}
 			c.eval(i)
-			n, err = fmt.Scan(reader, &i)
-			fmt.Println(n)
+			_, err = fmt.Fscan(reader, &i)
+			//	fmt.Println(n)
 		}
 	case "scan":
 		scanner := bufio.NewScanner(bytes.NewReader(s))

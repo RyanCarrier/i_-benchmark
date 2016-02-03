@@ -69,14 +69,14 @@ func (c *Cfg) Exec() error {
 		c.f, _ = os.Open(c.SourceFile)
 		defer c.f.Close()
 	}
-	err := c.ReadFromFile()
+	err := c.Read()
 	//defer will run before returned? TODO: Check this
 	return err
 }
 
-//ReadFromFile forwards the data reading job off to the correct function.
+//Read forwards the data reading job off to the correct function.
 //Alos note stdin is considered a file in this case
-func (c *Cfg) ReadFromFile() error {
+func (c *Cfg) Read() error {
 	switch c.ReadMethod {
 	case "bufio":
 		return c.FromBufio()
