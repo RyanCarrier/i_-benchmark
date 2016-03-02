@@ -25,7 +25,7 @@ func usageReadMethod() {
 	fmt.Println("ReadMethod;")
 	printt("bufio\tMust specify a BufioReadStyle")
 	printt("ioutil\tioutil is readfile with extra file open")
-	printt("readfile\tuses ioutils internal readfile")
+	printt("ioutilmanual\tuses ioutils internal readfile, without re-opening the file")
 }
 
 func usageBufioReadStyle() {

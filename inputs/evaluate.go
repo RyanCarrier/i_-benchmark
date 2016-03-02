@@ -12,10 +12,10 @@ import (
 //EvaluateAll evaluates everything passed in, multiple lines.
 func (c *Cfg) EvaluateAll(s []byte) error {
 	var i int
-	switch c.ParseMethod {
+	switch strings.ToLower(c.ParseMethod) {
 	case "fmtscan":
 		reader := bytes.NewReader(s)
-		for _, err := fmt.Scan(reader, &i); err == nil; _, err = fmt.Scan(reader, &i) {
+		for _, err := fmt.Fscan(reader, &i); err == nil; _, err = fmt.Fscan(reader, &i) {
 			if err != nil {
 				return err
 			}
@@ -41,6 +41,9 @@ func (c *Cfg) EvaluateAll(s []byte) error {
 			c.eval(i)
 		}
 	default:
+		if c.ParseMethod == "" {
+			return errors.New("ParseMethod not set")
+		}
 		return errors.New("ParseMethod not set correctly; " + c.ParseMethod)
 	}
 	return nil
@@ -63,6 +66,7 @@ func (c *Cfg) EvaluateLine(s []byte) error {
 			_, err = fmt.Fscan(reader, &i)
 			//	fmt.Println(n)
 		}
+		break
 	case "scan":
 		scanner := bufio.NewScanner(bytes.NewReader(s))
 		scanner.Split(bufio.ScanWords)
@@ -73,6 +77,7 @@ func (c *Cfg) EvaluateLine(s []byte) error {
 			}
 			c.eval(i)
 		}
+		break
 	case "splitstrconv":
 		fields := strings.Fields(string(s))
 		for _, f := range fields {
@@ -82,7 +87,11 @@ func (c *Cfg) EvaluateLine(s []byte) error {
 			}
 			c.eval(i)
 		}
+		break
 	default:
+		if c.ParseMethod == "" {
+			return errors.New("ParseMethod not set")
+		}
 		return errors.New("ParseMethod not set correctly; " + c.ParseMethod)
 	}
 	return nil

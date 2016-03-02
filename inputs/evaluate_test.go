@@ -2,6 +2,8 @@ package inputs
 
 import "testing"
 
+var Methods = []string{"fmtscan", "scan", "splitstrconv"}
+
 func TestInputEvaluateLine(t *testing.T) {
 	cases := []struct {
 		in    string
@@ -24,7 +26,6 @@ func TestInputEvaluateLine(t *testing.T) {
 			total: 2,
 		},
 	}
-	Methods := []string{"fmtscan", "scan", "splitstrconv"}
 	for _, method := range Methods {
 		for i, c := range cases {
 			cfg := NewCfg()
@@ -65,12 +66,11 @@ func TestInputEvaluateAll(t *testing.T) {
 			total: 2,
 		},
 	}
-	Methods := []string{"fmtscan", "scan", "splitstrconv"}
 	for _, method := range Methods {
 		for i, c := range cases {
 			cfg := NewCfg()
 			cfg.ParseMethod = method
-			err := cfg.EvaluateLine([]byte(c.in))
+			err := cfg.EvaluateAll([]byte(c.in))
 			check2(i, t, cfg.Count, cfg.Total, err, c.count, c.total, nil, method)
 		}
 	}

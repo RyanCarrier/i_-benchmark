@@ -45,10 +45,7 @@ func (c *Cfg) SetupAndRun(argv []string) error {
 	} else {
 		c.ParseMethod = strings.ToLower(argv[2])
 	}
-	if err := c.Exec(); err != nil {
-		return err
-	}
-	return nil
+	return c.Exec()
 }
 
 //NewCfg gets a new config struct.
@@ -62,35 +59,41 @@ func NewCfg() Cfg {
 //Exec is the main function of this package,
 // runs through the specified input file with parameters set in Cfg.
 func (c *Cfg) Exec() error {
+	var err error
+	c.Total = 0
+	c.Count = 0
 	switch c.SourceFile {
 	case "", "stdin":
 		c.f = os.Stdin
 	default:
-		c.f, _ = os.Open(c.SourceFile)
+		c.f, err = os.Open(c.SourceFile)
+		if err != nil {
+			return errors.New("Error opening source file; " + err.Error())
+		}
 		defer c.f.Close()
 	}
-	err := c.Read()
-	//defer will run before returned? TODO: Check this
+	err = c.read()
 	return err
 }
 
-//Read forwards the data reading job off to the correct function.
+//read forwards the data reading job off to the correct function.
 //Alos note stdin is considered a file in this case
-func (c *Cfg) Read() error {
-	switch c.ReadMethod {
+//read is private as files NEED to be opened before running through
+func (c *Cfg) read() error {
+	switch strings.ToLower(c.ReadMethod) {
 	case "bufio":
-		return c.FromBufio()
+		return c.ReadBufio()
+	case "ioutilmanual":
+		return c.ReadIoutilReadAllManual()
 	case "ioutil":
-		return c.FromIoutil()
-	case "readFile":
-		return c.ReadFromIoutilReadAll()
+		return c.ReadIoutilReadAll()
 	default:
 		return errors.New("ReadMethod set incorrectly; " + c.ReadMethod)
 	}
 }
 
-//ReadFromIoutilReadAll does the same as ioutil.ReadFile without re-opening the file.
-func (c *Cfg) ReadFromIoutilReadAll() error {
+//ReadIoutilReadAllManual does the same as ioutil.ReadFile without re-opening the file.
+func (c *Cfg) ReadIoutilReadAllManual() error {
 	var n int64
 	if fi, err := c.f.Stat(); err == nil {
 		// Don't preallocate a huge buffer, just in case.
@@ -100,24 +103,24 @@ func (c *Cfg) ReadFromIoutilReadAll() error {
 	}
 	b, err := ioutilReadAll(c.f, n)
 	if err != nil {
-		return err
+		return errors.New("Error reading by ioutilReadAll, ReadFromIoutilReadAll; " + err.Error())
 	}
 	return c.EvaluateAll(b)
 }
 
-//FromIoutil reads a file using ioutil(ReadAll)
-func (c *Cfg) FromIoutil() error {
+//ReadIoutilReadAll reads a file using ioutil(ReadAll)
+func (c *Cfg) ReadIoutilReadAll() error {
 	//MAYBE CLOSE THEN REOPEN
 	r, err := ioutil.ReadAll(c.f) //reallocate buffer
 	if err != nil {
-		return err
+		return errors.New("Error reading by ioutil.ReadAll, ReadIoutilReadAll; " + err.Error())
 	}
 	return c.EvaluateAll(r)
 }
 
-//FromBufio evaluates which bufio method to use when reading the file, then
+//ReadBufio evaluates which bufio method to use when reading the file, then
 //does it.
-func (c *Cfg) FromBufio() error {
+func (c *Cfg) ReadBufio() error {
 	var p []byte
 	var err error
 	switch c.BufioReadStyle {
@@ -126,39 +129,45 @@ func (c *Cfg) FromBufio() error {
 		//readstring calls readbytes
 		for p, err = reader.ReadBytes('\n'); err == nil; p, err = reader.ReadBytes('\n') {
 			if err = c.EvaluateLine(p); err != nil {
-				return err
+				return errors.New("Error reading by line, ReadBufio; " + err.Error())
 			}
 		}
-		if err != nil {
+		if err != nil && err != io.EOF {
 			return err
 		}
 		return c.EvaluateLine(p)
 	case "scanint":
 		var i int
 		reader := bufio.NewReader(c.f)
-		for _, err := fmt.Scan(reader, &i); err == nil; _, err = fmt.Scan(reader, &i) {
+		for _, err := fmt.Fscan(reader, &i); err == nil; _, err = fmt.Fscan(reader, &i) {
 			c.eval(i)
 		}
-		return err //NOTE this will be something, even if it runs correctly...
+		if err != nil && err != io.EOF {
+			return errors.New("Error reading by scanint, ReadBufio; " + err.Error()) //NOTE this will be something, even if it runs correctly...
+		}
+		return nil
 	case "scanlines":
 		scanner := bufio.NewScanner(c.f)
 		for scanner.Scan() {
 			err = c.EvaluateLine(scanner.Bytes())
-			return err
+			if err != nil {
+				return errors.New("Error reading by scanlines, ReadBufio; " + err.Error())
+			}
 		}
+		return nil
 	case "all":
 		reader := bufio.NewReader(c.f)
 		s, err := c.f.Stat()
 		if err != nil {
-			return err
+			return errors.New("Error reading by all, ReadBufio; " + err.Error())
 		}
-		p = make([]byte, s.Size()+bytes.MinRead)
+		p = make([]byte, s.Size()) //+bytes.MinRead)
 		reader.Read(p)
+		//fmt.Println(string(p))
 		return c.EvaluateAll(p)
 	default:
 		return errors.New("BufioReadStyle incorrectly set; " + c.BufioReadStyle)
 	}
-	return nil
 }
 
 //FROM READALL IOUTIL
