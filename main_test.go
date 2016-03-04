@@ -6,8 +6,7 @@ import (
 	"testing"
 )
 
-var ReadMethods = []string{"bufio", "ioutil", "ioutilmanual"}
-var BufioReadStyles = []string{"scanint", "scanlines", "line", "all"}
+var ReadMethods = []string{"bufio", "ioutil", "ioutilmanual", "bufioscanint", "bufioscanlines", "bufioline", "bufioall"}
 var TestFileNumbers = []int{1, 5, 50, 10000}
 
 func BenchmarkIoutil100(b *testing.B) {

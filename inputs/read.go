@@ -75,7 +75,7 @@ func (c *Cfg) read() error {
 		return c.ReadIoutilReadAllManual()
 	case "ioutil":
 		return c.ReadIoutilReadAll()
-	case "budioline":
+	case "bufioline":
 		return c.ReadBufioLine()
 	case "bufioscanint":
 		return c.ReadBufioScanInt()
