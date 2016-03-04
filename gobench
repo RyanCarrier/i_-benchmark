@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+go build benchSetup/main.go
+mv ./main ./setup
+go build main.go
+chmod a+x ./setup
+chmod a+x ./main
+./setup add 1 10 100 1000
+go test -bench=.
+./setup remove 1 10 100 1000
+rm ./setup

@@ -1,7 +1,6 @@
 package inputs
 
 import (
-	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -80,7 +79,6 @@ func TestRead(t *testing.T) {
 	setupTestFiles()
 	defer removeTestFiles()
 	for _, rm := range ReadMethods {
-		fmt.Println(rm)
 		if rm == "bufio" {
 			for _, readstyle := range BufioReadStyles {
 				test(t, rm, readstyle)
