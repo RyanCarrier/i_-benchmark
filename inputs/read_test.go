@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-var ReadMethods = []string{"bufio", "ioutil", "ioutilmanual", "bufioscanint", "bufioscanlines", "bufioline", "bufioall"}
+var ReadMethods = []string{"ioutil", "ioutilmanual", "bufioscanint", "bufioscanlines", "bufioline", "bufioall"}
 var TestFileNumbers = []int{1, 5, 50, 10000}
 var Totals []int64
 
