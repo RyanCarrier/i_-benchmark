@@ -12,6 +12,67 @@ import (
 var ReadMethods = []string{"ioutil", "ioutilmanual", "bufioscanint", "bufioscanlines", "bufioline", "bufioall"}
 var TestFileNumbers = []int{1, 5, 50, 10000}
 var Totals []int64
+var RM = ReadMethods
+var PM = []string{"fmtscan", "scan", "splitstrconv"}
+
+//ioutil
+func BenchmarkRM0PM0(b *testing.B) { benchmark(b, 0, 0) }
+func BenchmarkRM0PM1(b *testing.B) { benchmark(b, 0, 1) }
+func BenchmarkRM0PM2(b *testing.B) { benchmark(b, 0, 2) }
+
+//ioutilmanual
+func BenchmarkRM1PM0(b *testing.B) { benchmark(b, 1, 0) }
+func BenchmarkRM1PM1(b *testing.B) { benchmark(b, 1, 1) }
+func BenchmarkRM1PM2(b *testing.B) { benchmark(b, 1, 2) }
+
+//bufioscanint
+func BenchmarkRM2PM0(b *testing.B) { benchmark(b, 2, 0) }
+func BenchmarkRM2PM1(b *testing.B) { benchmark(b, 2, 1) }
+func BenchmarkRM2PM2(b *testing.B) { benchmark(b, 2, 2) }
+
+//bufioscanlines
+func BenchmarkRM3PM0(b *testing.B) { benchmark(b, 3, 0) }
+func BenchmarkRM3PM1(b *testing.B) { benchmark(b, 3, 1) }
+func BenchmarkRM3PM2(b *testing.B) { benchmark(b, 3, 2) }
+
+//bufioline
+func BenchmarkRM4PM0(b *testing.B) { benchmark(b, 4, 0) }
+func BenchmarkRM4PM1(b *testing.B) { benchmark(b, 4, 1) }
+func BenchmarkRM4PM2(b *testing.B) { benchmark(b, 4, 2) }
+
+//bufioall
+func BenchmarkRM5PM0(b *testing.B) { benchmark(b, 5, 0) }
+func BenchmarkRM5PM1(b *testing.B) { benchmark(b, 5, 1) }
+func BenchmarkRM5PM2(b *testing.B) { benchmark(b, 5, 2) }
+
+func benchmark(b *testing.B, rmi, pmi int) {
+	i := getTestSize(b)
+	filename := numToBenchFile(i)
+	c := NewCfg()
+	c.ReadMethod, c.ParseMethod = RM[rmi], PM[pmi]
+	c.SourceFile = filename
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		c.Exec()
+	}
+}
+
+func numToBenchFile(i int) string {
+	return "BenchFile" + strconv.Itoa(i) + ".in"
+}
+
+func getTestSize(b *testing.B) int {
+	p, err := ioutil.ReadFile("BenchSize.in")
+	if err != nil {
+		b.Fatal("Test size not found or incorrectly set")
+	}
+	i, err := strconv.Atoi(string(p))
+	//fmt.Println(err.Error())
+	if err != nil || i == 0 {
+		b.Fatal("Test size not found or incorrectly set")
+	}
+	return i
+}
 
 type Test struct {
 	in    string

@@ -7,6 +7,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/dustin/go-humanize"
 )
 
 //Counts keeps track of all the files that are needed to be created
@@ -39,9 +41,15 @@ func init() {
 func main() {
 	for _, i := range Counts {
 		if add {
-			createFile(i)
+			filename := createFile(i)
+			fmt.Println(filename + " created.\t" + getSize(filename))
 		} else {
-			os.Remove(numToFile(i))
+			err := os.Remove(numToFile(i))
+			if err != nil {
+				fmt.Println(numToFile(i) + " failed to be removed.")
+			} else {
+				fmt.Println(numToFile(i) + " removed successfully.")
+			}
 		}
 	}
 }
@@ -58,9 +66,7 @@ func setupAdd(s string) {
 }
 
 func parseSingle(s string) (ints []int, err error) {
-	split := strings.Split(s, ",")
-	stringsToInts(split)
-	return
+	return stringsToInts([]string{s})
 }
 
 func parseMultiple(ss []string) (ints []int, err error) {
@@ -80,8 +86,6 @@ func stringsToInts(s []string) (ints []int, err error) {
 
 func usage() {
 	fmt.Println("./main add/remove 1 [10 100 ...]")
-	fmt.Println("\tor")
-	fmt.Println("./main add/remove 1[,10,100,...]")
 	os.Exit(1)
 }
 
@@ -113,4 +117,12 @@ func createFile(ints int) string {
 	}
 	file.Close()
 	return filename
+}
+
+func getSize(filename string) string {
+	f, err := os.Stat(filename)
+	if err != nil {
+		return err.Error()
+	}
+	return humanize.Bytes(uint64(f.Size()))
 }
