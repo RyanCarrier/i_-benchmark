@@ -13,7 +13,7 @@ mkdir $FOLDER
 echo "TEST $B1" 
 LEN=${#NAMES}
 for i in `seq 0 $LEN`;do	
-		FILE="$FOLDER/$FILENAME${NAMES[i]}"
+	FILE="$FOLDER/$FILENAME${NAMES[i]}"
 
 	echo "TESTING ${NAMES[i]}"
 	echo "TEST ${NAMES[i]}">$FILE
