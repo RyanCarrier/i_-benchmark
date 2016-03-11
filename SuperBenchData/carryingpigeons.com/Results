@@ -1,0 +1,80 @@
+Bench300B
+Mean	Median
+2681870	2694052
+Top 5;
+CAT	BenchmarkRM0PM0-4	2514403	ns/op
+CAT	BenchmarkRM2PM0-4	2539001	ns/op
+CAT	BenchmarkRM0PM2-4	2547676	ns/op
+CAT	BenchmarkRM0PM1-4	2576918	ns/op
+CAT	BenchmarkRM1PM0-4	2580537	ns/op
+Slowest 5;
+FILE	BenchmarkRM5PM0-4	2778418	ns/op
+FILE	BenchmarkRM4PM0-4	2778479	ns/op
+PASS	BenchmarkRM3PM2-4	2781259	ns/op
+FILE	BenchmarkRM3PM1-4	2781685	ns/op
+FILE	BenchmarkRM5PM2-4	2789778	ns/op
+
+Bench30kB
+Mean	Median
+2694591	2688528
+Top 5;
+CAT	BenchmarkRM0PM0-4	2535807	ns/op
+CAT	BenchmarkRM0PM2-4	2550883	ns/op
+CAT	BenchmarkRM2PM0-4	2585976	ns/op
+CAT	BenchmarkRM1PM0-4	2587598	ns/op
+CAT	BenchmarkRM0PM1-4	2588958	ns/op
+Slowest 5;
+FILE	BenchmarkRM4PM1-4	2830455	ns/op
+FILE	BenchmarkRM4PM2-4	2845223	ns/op
+FILE	BenchmarkRM5PM2-4	2847316	ns/op
+FILE	BenchmarkRM5PM1-4	2852130	ns/op
+FILE	BenchmarkRM5PM0-4	2852615	ns/op
+
+Bench3MB
+Mean	Median
+2738463	2737932
+Top 5;
+CAT	BenchmarkRM0PM0-4	2604238	ns/op
+CAT	BenchmarkRM0PM1-4	2631250	ns/op
+PASS	BenchmarkRM0PM0-4	2660165	ns/op
+FILE	BenchmarkRM0PM0-4	2665494	ns/op
+CAT	BenchmarkRM2PM1-4	2674590	ns/op
+Slowest 5;
+FILE	BenchmarkRM2PM2-4	2786281	ns/op
+FILE	BenchmarkRM4PM1-4	2793416	ns/op
+CAT	BenchmarkRM4PM2-4	2801723	ns/op
+FILE	BenchmarkRM5PM0-4	2804453	ns/op
+FILE	BenchmarkRM4PM2-4	2823150	ns/op
+
+Bench30MB
+Mean	Median
+5728642	2760258
+Top 5;
+PASS	BenchmarkRM0PM0-4	2597577	ns/op
+FILE	BenchmarkRM0PM0-4	2654889	ns/op
+FILE	BenchmarkRM1PM1-4	2661380	ns/op
+PASS	BenchmarkRM4PM0-4	2668444	ns/op
+PASS	BenchmarkRM0PM1-4	2669870	ns/op
+Slowest 5;
+CAT	BenchmarkRM5PM0-4	11765697	ns/op
+CAT	BenchmarkRM5PM1-4	11773001	ns/op
+CAT	BenchmarkRM4PM2-4	11803986	ns/op
+CAT	BenchmarkRM4PM1-4	11858470	ns/op
+CAT	BenchmarkRM3PM0-4	12095212	ns/op
+
+Bench300MB
+Mean	Median
+31704524	2726864
+Top 5;
+FILE	BenchmarkRM1PM0-4	2590047	ns/op
+PASS	BenchmarkRM0PM0-4	2592407	ns/op
+PASS	BenchmarkRM0PM1-4	2621069	ns/op
+FILE	BenchmarkRM0PM0-4	2625185	ns/op
+FILE	BenchmarkRM0PM1-4	2641094	ns/op
+Slowest 5;
+CAT	BenchmarkRM4PM1-4	89985784	ns/op
+CAT	BenchmarkRM1PM1-4	90148099	ns/op
+CAT	BenchmarkRM2PM0-4	90167147	ns/op
+CAT	BenchmarkRM3PM1-4	90522600	ns/op
+CAT	BenchmarkRM2PM2-4	90599596	ns/op
+
