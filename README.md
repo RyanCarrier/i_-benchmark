@@ -71,8 +71,30 @@ scan uses a [bufio.Scanner](https://golang.org/pkg/bufio#Scanner) to scan for ea
 - 2 : splitstrconv
 splitstrconv uses [strings.Fields](https://golang.org/pkg/strings#Fields) to split the string into 'words' or 'fields' and then parses each one individually into [strconv.Atoi](https://golang.org/pkg/strconv#Atoi) to convert into an integer.
 
+##Bench.sh
+Bench.sh is the default way of benchmarking, run `./Bench.sh` with no arguments for help.
+###Examples
+`./Bench.sh 100 file 5 RM3`
 
+Will run the benchmark on a file with 100 integers, letting golang open the file itself, running each benchmark for 5s and only benchmarking the read method bufioscanlines (3).
 
+`./Bench.sh 100000 pass 0`
 
+Will run the benchmark on a file with 100,000 integers, giving the executable the file through redirection, running each benchmark for the golang default time (1s) and running all benchmarks.
 
+##SuperBench.sh
+SuperBench.sh runs a 'super' benchmark on the computer. It runs every benchmark combination (except for input type internal) on files from 300B to 300MB. It creates and saves the results in a folder `SuperBench`, with a script to get statistics on the results.
 
+The (very) approximate runtime of `SuperBench.sh` is 1 hour.
+
+##SuperBenchData
+SuperBenchData is a folder for completed super bench on various systems (preferably substantially different). This is done to compare different hardwares results, for example; HDD vs SSD, 2GB ram vs 32GB ram, single vs multicore CPU.
+
+##TestFileSize
+TestFileSize is a testing folder used to figure out if golang would know the size of a catted or redirected file. It was an interesting thought that I found others did not know either, so it was left in as it is relevant and interesting. (If you can't be bothered to run it, it does know.)
+
+##BenchSetup
+BenchSetup is used for setting up the benchmark, primarily for creating the test files, converting the number 1000 into a file with 1000 random integers and new lines thrown in at semi-random places.
+
+##inputs
+inputs is the folder containing most of the actual parsing. The internal benchmarking is ran from within there (and tests if needed). This is the folder/package that the main executable uses.

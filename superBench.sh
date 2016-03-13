@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+echo -e "(very) approximate running time is 1 hour.\nIf canceling early please run ./ManualClean.sh to clean up the benchmarking files.\n"
 FOLDER="SuperBench"
 FILENAME="Bench"
 B1="300B"
@@ -25,7 +26,8 @@ for i in `seq 0 $LEN`;do
 	echo "FILE">>$FILE
 	./Bench.sh ${INTS[i]} file 10 2>/dev/null |grep Benchmark >> $FILE
 done
+echo -e "#!/bin/bash\ngo run ../../SuperBenchData/top5.go" >> "$FOLDER/Top5.sh"
 
 
-
-echo "Results in ./SuperBench/"
+echo "Results in ./$FOLDER"
+echo "Run Top5.sh from within ./$FOLDER to see useful statistics and the 5 fastest and slowest combinations for each file size."

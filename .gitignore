@@ -1,1 +1,7 @@
 SuperBench/
+BenchFile*
+BenchSize.in
+BenchInput.in
+inputs/BenchSize.in
+inputs/BenchInput.in
+inputs/BenchFile*
