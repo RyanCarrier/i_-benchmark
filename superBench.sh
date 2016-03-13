@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 FOLDER="SuperBench"
 FILENAME="Bench"
 B1="300B"
@@ -18,11 +19,11 @@ for i in `seq 0 $LEN`;do
 	echo "TESTING ${NAMES[i]}"
 	echo "TEST ${NAMES[i]}">$FILE
 	echo "PASS">>$FILE
-	./gobench ${INTS[i]} pass 10 2>/dev/null |grep Benchmark >> $FILE
+	./Bench.sh ${INTS[i]} pass 10 2>/dev/null |grep Benchmark >> $FILE
 	echo "CAT">>$FILE
-	./gobench ${INTS[i]} cat 10 2>/dev/null |grep Benchmark >> $FILE
+	./Bench.sh ${INTS[i]} cat 10 2>/dev/null |grep Benchmark >> $FILE
 	echo "FILE">>$FILE
-	./gobench ${INTS[i]} file 10 2>/dev/null |grep Benchmark >> $FILE
+	./Bench.sh ${INTS[i]} file 10 2>/dev/null |grep Benchmark >> $FILE
 done
 
 
